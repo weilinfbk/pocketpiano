@@ -1,4 +1,4 @@
-<!DOCTYPE html><meta name="dsh-browser-project" content="eyJ2ZXJzaW9uIjoxLCJzZXJ2aWNlSWQiOiJhYTViNmFlY2NmMmVmYmI1NjVmOGNhNzQ0YTM2MWZhZiIsInByb2plY3RJZCI6IjEyYTZhYzcxZWE4MWRjYzI5ZDEyMjFlOSIsInJvdXRlIjoiL2luZGV4Lmh0bWwiLCJpc3N1ZWRBdE1pbGxpcyI6MTc5NTYwNTMxMjczOSwiZXhwaXJlc0F0TWlsbGlzIjoxNzk1NjA3MTEyNzM5LCJkb2N1bWVudE5vbmNlIjoiNzUyN2VmMTdhZDcyMDkxYTAwYjg0ZWU1ZDM5ZGU2ZmIifQ.a2b7d2322d8acbf11410c4fe07eb63252ac8e0c8067168dd33210f373e77f01c">
+<!DOCTYPE html><meta name="dsh-browser-project" content="eyJ2ZXJzaW9uIjoxLCJzZXJ2aWNlSWQiOiIzZGQ4Y2U3NDRkZDA0YzRhOWU1YjZjNzczYjEzMWMzNCIsInByb2plY3RJZCI6IjEyYTZhYzcxZWE4MWRjYzI5ZDEyMjFlOSIsInJvdXRlIjoiL2luZGV4Lmh0bWwiLCJpc3N1ZWRBdE1pbGxpcyI6MTc5NTYwNzI4ODc1NSwiZXhwaXJlc0F0TWlsbGlzIjoxNzk1NjA5MDg4NzU1LCJkb2N1bWVudE5vbmNlIjoiNTVlNTRiNjY1ZTliYTY3NGRhMTJhOWMyZWRmZDQ3NWMifQ.6d5a9a9a2635cc13ad580c546ed3902c02b092ec50774a8c52f348e4814332db">
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -2023,9 +2023,10 @@
 
   /* ------------------------------------------------------------
      Layout: portrait is always 3 columns × N rows. In phone
-     landscape or on PC (wide screens) the whole key set is rotated
-     90° clockwise, becoming N columns × 3 rows. Labels read
-     horizontally in that wide mode. Note order and shortcuts stay.
+     landscape or on PC (wide screens) the key set is transposed into
+     N columns × 3 rows: each portrait column becomes a landscape row,
+     left-to-right, preserving the note order inside that line. Labels
+     read horizontally in wide mode. Note order and shortcuts stay.
   ------------------------------------------------------------ */
   function makeLayout() {
     const leftSeqs = Array.from({ length: rows }, (_, r) => 2 * rows + r + 1);
@@ -2058,7 +2059,7 @@
     const order = [];
     if (wide) {
       for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < rows; c++) order.push(origRows[rows - 1 - c][r]);
+        for (let c = 0; c < rows; c++) order.push(origRows[c][r]);
       }
     } else {
       columns.forEach(column => column.seqs.forEach(seq => order.push(seq)));

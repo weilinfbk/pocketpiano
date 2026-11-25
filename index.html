@@ -1,4 +1,4 @@
-<!DOCTYPE html><meta name="dsh-browser-project" content="eyJ2ZXJzaW9uIjoxLCJzZXJ2aWNlSWQiOiIzZGQ4Y2U3NDRkZDA0YzRhOWU1YjZjNzczYjEzMWMzNCIsInByb2plY3RJZCI6IjEyYTZhYzcxZWE4MWRjYzI5ZDEyMjFlOSIsInJvdXRlIjoiL2luZGV4Lmh0bWwiLCJpc3N1ZWRBdE1pbGxpcyI6MTc5NTYwNzI4ODc1NSwiZXhwaXJlc0F0TWlsbGlzIjoxNzk1NjA5MDg4NzU1LCJkb2N1bWVudE5vbmNlIjoiNTVlNTRiNjY1ZTliYTY3NGRhMTJhOWMyZWRmZDQ3NWMifQ.6d5a9a9a2635cc13ad580c546ed3902c02b092ec50774a8c52f348e4814332db">
+<!DOCTYPE html><meta name="dsh-browser-project" content="eyJ2ZXJzaW9uIjoxLCJzZXJ2aWNlSWQiOiI3ZjViN2JkZjJkNjgyODJkMzdmMmRmMjE5YjJkMTA0MyIsInByb2plY3RJZCI6IjEyYTZhYzcxZWE4MWRjYzI5ZDEyMjFlOSIsInJvdXRlIjoiL2luZGV4Lmh0bWwiLCJpc3N1ZWRBdE1pbGxpcyI6MTc5NTYxMDk2NDU1MSwiZXhwaXJlc0F0TWlsbGlzIjoxNzk1NjEyNzY0NTUxLCJkb2N1bWVudE5vbmNlIjoiNzUyYTlkMjg4NGRiOGJlYjg2OGVhOGQ0ZWM4YmQwMmIifQ.3f5531ad2718f0a78d54ea9b7b6ca233824d8d107f94d463b28cc73c6346006e">
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -326,10 +326,12 @@
     outline:3px solid var(--primary);
     outline-offset:3px;
   }
-  .pad.is-active{
+  .pad.is-active,
+  .pad.is-held{
     border-color:rgba(var(--accent),.70);
   }
-  .pad.is-active::after{opacity:.18}
+  .pad.is-active::after,
+  .pad.is-held::after{opacity:.18}
   .pad.has-custom::before{
     content:"";
     position:absolute;
@@ -2053,14 +2055,11 @@
       });
     });
 
-    const origRows = Array.from({ length: rows }, (_, r) => [
-      leftSeqs[r], midSeqs[r], rightSeqs[r]
-    ]);
     const order = [];
     if (wide) {
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < rows; c++) order.push(origRows[c][r]);
-      }
+      // Wide layout reads musically left-to-right / top-to-bottom:
+      // C4, D4, E4 ... on the top row, then the next octave notes.
+      for (let seq = 1; seq <= total; seq++) order.push(seq);
     } else {
       columns.forEach(column => column.seqs.forEach(seq => order.push(seq)));
     }
@@ -2175,6 +2174,8 @@
      Interaction — pointer + keyboard, pressed state
   ------------------------------------------------------------ */
   const activeTimers = new WeakMap();
+  const activePointers = new Map();
+  const padHolds = new Map();
 
   function press(pad) {
     if (!pad) return;
@@ -2185,14 +2186,47 @@
     pad.classList.add("is-active");
     clearTimeout(activeTimers.get(pad));
     activeTimers.set(pad, setTimeout(() => pad.classList.remove("is-active"), 260));
+  }
 
+  function holdPad(pad) {
+    padHolds.set(pad, (padHolds.get(pad) || 0) + 1);
+    pad.classList.add("is-held");
+  }
+
+  function releaseHeldPad(pad) {
+    const count = (padHolds.get(pad) || 1) - 1;
+    if (count <= 0) {
+      padHolds.delete(pad);
+      pad.classList.remove("is-held");
+    } else {
+      padHolds.set(pad, count);
+    }
   }
 
   grid.addEventListener("pointerdown", event => {
     const pad = event.target.closest(".pad");
     if (!pad || !grid.contains(pad)) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (event.pointerType === "touch") event.preventDefault();
+    if (activePointers.has(event.pointerId)) return;
+    activePointers.set(event.pointerId, pad);
+    holdPad(pad);
     press(pad);
+  }, { passive: false });
+
+  function releasePointer(event) {
+    const pad = activePointers.get(event.pointerId);
+    if (!pad) return;
+    activePointers.delete(event.pointerId);
+    releaseHeldPad(pad);
+  }
+
+  window.addEventListener("pointerup", releasePointer, true);
+  window.addEventListener("pointercancel", releasePointer, true);
+  window.addEventListener("blur", () => {
+    activePointers.clear();
+    padHolds.clear();
+    document.querySelectorAll(".pad.is-held").forEach(p => p.classList.remove("is-held"));
   });
 
   // Keyboard activation of a focused pad (Enter / Space) has detail === 0.

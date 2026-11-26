@@ -12,6 +12,10 @@
   ------------------------------------------------------------ */
   :root{
     --surface:#141218;
+    --surface-rgb:33,31,38;
+    --pad-alpha:1;
+    --custom-bg:none;
+    --bg-veil:linear-gradient(180deg,rgba(20,18,24,.22),rgba(20,18,24,.52));
     --surface-container-lowest:#0f0d13;
     --surface-container-low:#1d1b20;
     --surface-container:#211f26;
@@ -42,6 +46,8 @@
   html[data-theme="light"]{
     color-scheme:light;
     --surface:#fef7ff;
+    --surface-rgb:243,237,247;
+    --bg-veil:linear-gradient(180deg,rgba(254,247,255,.28),rgba(254,247,255,.58));
     --surface-container-lowest:#ffffff;
     --surface-container-low:#f7f2fa;
     --surface-container:#f3edf7;
@@ -84,6 +90,13 @@
     text-rendering:optimizeLegibility;
     user-select:none;
     -webkit-user-select:none;
+  }
+  body.has-custom-bg{
+    background-image:var(--bg-veil),var(--custom-bg);
+    background-size:cover,cover;
+    background-position:center,center;
+    background-repeat:no-repeat,no-repeat;
+    background-attachment:fixed,fixed;
   }
 
   .app{
@@ -293,8 +306,8 @@
     border:1px solid rgba(var(--accent),.30);
     border-radius:clamp(20px,3.4vmin,28px);
     background:
-      linear-gradient(rgba(var(--accent),.20),rgba(var(--accent),.20)),
-      var(--surface-container);
+      linear-gradient(rgba(var(--accent),calc(.20 * var(--pad-alpha,1))),rgba(var(--accent),calc(.20 * var(--pad-alpha,1)))),
+      rgba(var(--surface-rgb),var(--pad-alpha,1));
     color:var(--on-surface);
     box-shadow:
       0 1px 2px rgba(0,0,0,.30),
@@ -880,6 +893,7 @@
     .sheet-sub{font-size:11px;line-height:1.45}
     .setting{padding:11px 0}
     .setting-note{margin:6px 0 10px;font-size:11px;line-height:1.45}
+  .setting-note.is-error{color:#ffb4ab}
   }
 
 
@@ -1059,7 +1073,7 @@
       <div class="sheet-head">
         <div>
           <h2 class="sheet-title" id="soundTitle" data-i18n="settings">设置</h2>
-          <p class="sheet-sub" data-i18n="settingsSub">移调、键位与主题。键位可选 3 × 4 到 3 × 6。</p>
+          <p class="sheet-sub" data-i18n="settingsSub">移调、键位、背景与主题。键位可选 3 × 4 到 3 × 6。</p>
         </div>
         <button id="closeSound" class="icon-button" type="button" aria-label="关闭" data-i18n-aria="close">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1077,6 +1091,25 @@
           <button class="segment" type="button" data-lang="zh" aria-pressed="true">中文</button>
           <button class="segment" type="button" data-lang="en" aria-pressed="false">English</button>
         </div>
+      </section>
+
+      <section class="setting" aria-labelledby="backgroundLabel">
+        <div class="setting-head">
+          <span id="backgroundLabel" data-i18n="background">背景</span>
+          <span class="setting-value" id="bgName" data-i18n="bgDefault">默认背景</span>
+        </div>
+        <div class="assign-row">
+          <button id="bgPick" class="action-button" type="button" data-i18n="chooseImage">选择图片</button>
+          <button id="bgReset" class="text-button" type="button" disabled data-i18n="resetBackground">恢复默认</button>
+          <input id="bgImage" type="file" accept="image/*" hidden>
+        </div>
+        <div class="setting-head" style="margin-top:14px">
+          <span id="padOpacityLabel" data-i18n="padOpacity">按键透明度</span>
+          <output class="setting-value" id="padOpacityValue" for="padOpacity">100%</output>
+        </div>
+        <input id="padOpacity" class="transpose-input" type="range" min="0" max="100" step="1" value="100" aria-labelledby="padOpacityLabel">
+        <div class="range-scale"><span>0%</span><span>100%</span></div>
+        <p class="setting-note" id="bgStatus" aria-live="polite" data-i18n="bgNote">图片保存在本机；拖动透明度让背景从按键中透出来。</p>
       </section>
 
       <section class="setting" aria-labelledby="transposeLabel">
@@ -1140,6 +1173,8 @@
           </label>
         </div>
       </section>
+
+
     </div>
   </dialog>
 
@@ -1243,7 +1278,7 @@
       settings: "设置", sample: "采样", reverb: "混响", volume: "音量",
       fullscreen: "全屏", exitFullscreen: "退出全屏",
       soundLabel: "音色", chooseSound: "选择音色", customSample: "自定义采样",
-      settingsSub: "移调、键位、语言与主题。键位可选 3 × 4 到 3 × 6。",
+      settingsSub: "移调、键位、语言、背景与主题。键位可选 3 × 4 到 3 × 6。",
       transpose: "移调", layout: "键位", theme: "主题", language: "语言",
       languageAria: "语言", themeAria: "主题亮度", layoutAria: "键位排列", accentAria: "强调色",
       dark: "暗色", light: "亮色", accent: "强调色", default: "默认", custom: "自定义",
@@ -1251,6 +1286,11 @@
       orange: "橙色", pink: "粉色", customColor: "自定义颜色",
       layoutNote: "竖屏保持 3 列；横屏或宽屏时整组键位顺时针旋转 90°，文字逆时针转回 90° 横排。",
       themeNote: "亮色/暗色和强调色会立即应用，并记住到下次打开。",
+      background: "背景", bgDefault: "默认背景", bgCustom: "自定义背景", chooseImage: "选择图片", resetBackground: "恢复默认",
+      padOpacity: "按键透明度",
+      bgNote: "图片保存在本机；拖动透明度让背景从按键中透出来。",
+      bgReadError: "无法读取这张图片。", bgTooLarge: "图片太大，无法保存。",
+      bgSaved: "背景：{name}", bgSavedSession: "背景已设置（本次有效，无法长期保存）。",
       audioLabel: "音频分配",
       audioNote: "目标「全部按键」：1 个文件整组以 C4 移调，多个按编号 01→当前键位数分配；目标选单个键：只替换该键。支持 MP3/WAV/M4A/OGG；长音频取前约 6.5 秒。",
       target: "替换目标", allPads: "全部按键",
@@ -1291,7 +1331,7 @@
       settings: "Settings", sample: "Sample", reverb: "Reverb", volume: "Volume",
       fullscreen: "Fullscreen", exitFullscreen: "Exit fullscreen",
       soundLabel: "Sound", chooseSound: "Choose sound", customSample: "Custom samples",
-      settingsSub: "Transpose, layout, language and theme. Choose 3 × 4 to 3 × 6.",
+      settingsSub: "Transpose, layout, language, background and theme. Choose 3 × 4 to 3 × 6.",
       transpose: "Transpose", layout: "Layout", theme: "Theme", language: "Language",
       languageAria: "Language", themeAria: "Theme brightness", layoutAria: "Key layout", accentAria: "Accent color",
       dark: "Dark", light: "Light", accent: "Accent", default: "Default", custom: "Custom",
@@ -1299,6 +1339,11 @@
       orange: "Orange", pink: "Pink", customColor: "Custom color",
       layoutNote: "Portrait stays 3 columns; landscape and wide screens rotate the whole keypad 90° clockwise, with the text turned back 90° to read upright.",
       themeNote: "Light/dark mode and the accent color apply instantly and are remembered next time.",
+      background: "Background", bgDefault: "Default background", bgCustom: "Custom background", chooseImage: "Choose image", resetBackground: "Reset",
+      padOpacity: "Pad opacity",
+      bgNote: "The image is saved on this device; drag the opacity to let the background show through the pads.",
+      bgReadError: "Could not read this image.", bgTooLarge: "Image is too large to save.",
+      bgSaved: "Background: {name}", bgSavedSession: "Background set for this session only (could not save it).",
       audioLabel: "Audio routing",
       audioNote: "All pads: one file is transposed from C4 for the whole set; multiple files fill pads in number order 01→current pad count. Single pad: only that pad is replaced. Supports MP3/WAV/M4A/OGG; long clips use about the first 6.5 seconds.",
       target: "Target", allPads: "All pads",
@@ -2273,14 +2318,27 @@
     const transportEl = document.getElementById("transport");
     const transportSpace = transportEl ? transportEl.getBoundingClientRect().height + 12 : 0;
     const usableH = vh - (wide ? (compact ? 94 : 190) : (vw <= 600 ? 168 : 180)) - transportSpace;
+    const appBarEl = document.querySelector(".app-bar");
+    const safeTop = appBarEl ? appBarEl.getBoundingClientRect().bottom + 4 : 0;
+    const centerLimit = Math.max(120, vh - 2 * safeTop);
     const width = Math.max(120, Math.min(
       usableW,
       Math.max(120, usableH) * cols / visualRows,
+      centerLimit * cols / visualRows,
       wide ? 800 : 620
     ));
     grid.style.setProperty("--pad-size", `${width / cols}px`);
     grid.style.width = `${width}px`;
     grid.style.height = `${width * visualRows / cols}px`;
+
+    /* Center the whole matrix in the viewport, not just in the stage box. */
+    grid.style.transform = "none";
+    const rect = grid.getBoundingClientRect();
+    const dx = (vw - rect.width) / 2 - rect.left;
+    let dy = (vh - rect.height) / 2 - rect.top;
+    const minTop = safeTop + 2;
+    if (rect.top + dy < minTop) dy = minTop - rect.top;
+    grid.style.transform = `translate(${dx}px, ${dy}px)`;
   }
 
   function renderGrid() {
@@ -2643,6 +2701,19 @@
   let themeMode = "dark";
   let themeAccent = null;
 
+  const bgPick = document.getElementById("bgPick");
+  const bgReset = document.getElementById("bgReset");
+  const bgImage = document.getElementById("bgImage");
+  const bgName = document.getElementById("bgName");
+  const bgStatus = document.getElementById("bgStatus");
+  const padOpacity = document.getElementById("padOpacity");
+  const padOpacityValue = document.getElementById("padOpacityValue");
+  const BG_KEY = "piano-grid-bg-v1";
+  const BG_NAME_KEY = "piano-grid-bg-name-v1";
+  const PAD_ALPHA_KEY = "piano-grid-pad-alpha-v1";
+  let bgDataUrl = null;
+  let bgFileName = "";
+
   function validHex(value) {
     return /^#[0-9a-f]{6}$/i.test(value || "") ? value.toLowerCase() : null;
   }
@@ -2690,6 +2761,103 @@
     });
   }
 
+  function updatePadOpacityUI() {
+    const value = Math.round(Number(getComputedStyle(themeRoot).getPropertyValue("--pad-alpha").trim() || 1) * 100);
+    padOpacityValue.textContent = `${value}%`;
+    padOpacity.style.setProperty("--fill", `${value}%`);
+  }
+
+  function setPadAlpha(value, persist = true) {
+    const n = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+    themeRoot.style.setProperty("--pad-alpha", String(n / 100));
+    padOpacity.value = String(n);
+    updatePadOpacityUI();
+    if (persist) {
+      try { localStorage.setItem(PAD_ALPHA_KEY, String(n)); } catch (_) {}
+    }
+  }
+
+  function updateBackgroundUI() {
+    bgName.textContent = bgDataUrl ? (bgFileName || t("bgCustom")) : t("bgDefault");
+    bgReset.disabled = !bgDataUrl;
+    if (bgStatus && !bgStatus.classList.contains("is-error")) {
+      bgStatus.textContent = t("bgNote");
+    }
+  }
+
+  function applyBackground(dataUrl, name = "", persist = true) {
+    bgDataUrl = dataUrl || null;
+    bgFileName = name || "";
+    if (bgDataUrl) {
+      document.body.classList.add("has-custom-bg");
+      themeRoot.style.setProperty("--custom-bg", `url("${bgDataUrl}")`);
+    } else {
+      document.body.classList.remove("has-custom-bg");
+      themeRoot.style.removeProperty("--custom-bg");
+    }
+    bgStatus.classList.remove("is-error");
+    if (persist) {
+      try {
+        if (bgDataUrl) {
+          localStorage.setItem(BG_KEY, bgDataUrl);
+          localStorage.setItem(BG_NAME_KEY, bgFileName);
+        } else {
+          localStorage.removeItem(BG_KEY);
+          localStorage.removeItem(BG_NAME_KEY);
+        }
+      } catch (_) {
+        bgStatus.textContent = t("bgSavedSession");
+      }
+    }
+    updateBackgroundUI();
+  }
+
+  function readBackgroundFile(file) {
+    return new Promise((resolve, reject) => {
+      if (!file || !file.type || !file.type.startsWith("image/")) {
+        reject(new Error("read"));
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const max = 1600;
+          const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+          canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const data = canvas.toDataURL("image/jpeg", .82);
+          URL.revokeObjectURL(url);
+          if (data.length > 4_500_000) {
+            reject(new Error("large"));
+            return;
+          }
+          resolve({ data, name: file.name || "background" });
+        } catch (err) {
+          URL.revokeObjectURL(url);
+          reject(err);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("read"));
+      };
+      img.src = url;
+    });
+  }
+
+  function restoreBackground() {
+    try {
+      const saved = localStorage.getItem(BG_KEY);
+      if (saved) applyBackground(saved, localStorage.getItem(BG_NAME_KEY) || "", false);
+      const alpha = localStorage.getItem(PAD_ALPHA_KEY);
+      if (alpha !== null) setPadAlpha(Number(alpha), false);
+    } catch (_) {}
+  }
+
   function applyLanguage(lang, persist = true) {
     LANG = lang === "en" ? "en" : "zh";
     document.documentElement.lang = LANG === "en" ? "en" : "zh-CN";
@@ -2714,6 +2882,8 @@
     presetSelect.setAttribute("aria-label", t("chooseSound"));
     updateLanguageUI();
     updateThemeLabels();
+    updateBackgroundUI();
+    updatePadOpacityUI();
     syncFullscreenUI();
     applyTranspose(transpose);
     updateAudioUI();
@@ -2793,6 +2963,26 @@
   languageButtons.forEach(button => {
     button.addEventListener("click", () => applyLanguage(button.dataset.lang));
   });
+
+  bgPick.addEventListener("click", () => bgImage.click());
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if (!file) return;
+    try {
+      const result = await readBackgroundFile(file);
+      applyBackground(result.data, result.name, true);
+    } catch (err) {
+      bgStatus.textContent = t(err && err.message === "large" ? "bgTooLarge" : "bgReadError");
+      bgStatus.classList.add("is-error");
+    }
+    bgImage.value = "";
+  });
+  bgReset.addEventListener("click", () => {
+    applyBackground(null, "", true);
+    bgStatus.classList.remove("is-error");
+    bgStatus.textContent = t("bgNote");
+  });
+  padOpacity.addEventListener("input", () => setPadAlpha(padOpacity.value));
 
   function showSheet(dialog, button, closeButton, otherDialog, otherButton) {
     if (otherDialog.open) otherDialog.close();
@@ -3183,6 +3373,7 @@
   updateTransportUI();
 
   /* Initial paint */
+  restoreBackground();
   renderGrid();
   updateAudioUI();
   applyLanguage(LANG, false);

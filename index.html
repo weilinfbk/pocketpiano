@@ -1,4 +1,4 @@
-<!DOCTYPE html><meta name="dsh-browser-project" content="eyJ2ZXJzaW9uIjoxLCJzZXJ2aWNlSWQiOiJjYmUzMzA5MTA3NzFhYmE5MTM5NmIyMzJmODUxNmZkOCIsInByb2plY3RJZCI6IjEyYTZhYzcxZWE4MWRjYzI5ZDEyMjFlOSIsInJvdXRlIjoiL2luZGV4Lmh0bWwiLCJpc3N1ZWRBdE1pbGxpcyI6MTc5NTc4NDUzMjg5NCwiZXhwaXJlc0F0TWlsbGlzIjoxNzk1Nzg2MzMyODk0LCJkb2N1bWVudE5vbmNlIjoiZDM1NGU3YTY2Y2UxZjBhMTBkMjg3ODRhZmQzMzhmNDYifQ.77f3eba9d1b0b84f4f070eb55cd290d2e1ec3ac24eb69661f65f1000f4278b0c">
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -491,6 +491,7 @@
   .transport-button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
   .transport-button[aria-pressed="true"]{background:var(--secondary-container);color:var(--on-secondary-container)}
   .transport-button.is-recording{background:rgba(255,90,90,.22);color:#ff7b7b}
+  .transport-button.is-armed{background:rgba(255,170,60,.16);color:#ffc46b;box-shadow:inset 0 0 0 1px rgba(255,190,90,.35)}
   .transport-button.is-playing{background:var(--primary-container);color:var(--on-primary-container)}
   .transport-button.is-on{background:var(--secondary-container);color:var(--on-secondary-container)}
   .transport-button.is-beat{box-shadow:0 0 0 2px rgba(var(--primary-rgb),.55),0 0 18px rgba(var(--primary-rgb),.45)}
@@ -942,6 +943,10 @@
     .tool-button{width:38px}
     #fullscreenButton{width:40px}
     .volume-control input{width:50px}
+  }
+
+  @media (min-width:380px) and (max-width:600px){
+    .preset-select{max-width:118px}
   }
 
   @media (max-width:380px){
@@ -1427,7 +1432,7 @@
       languageName: "中文",
       enterFullscreen: "全屏", exitFullscreen: "退出全屏",
       transport: "节拍器与录音", metronome: "节拍器", bpm: "BPM",
-      record: "录制", stopRecord: "停止录制", play: "回放", stop: "停止",
+      record: "录制", stopRecord: "停止录制", recordArmed: "等待按键开始", play: "回放", stop: "停止",
       clear: "清空", neon: "霓虹光效",
       padSize: "按键大小",
       padSizeNote: "调整整组按键大小；会保持在屏幕中间，并避开上方工具和右下角控制。",
@@ -1492,7 +1497,7 @@
       languageName: "English",
       enterFullscreen: "Fullscreen", exitFullscreen: "Exit fullscreen",
       transport: "Metronome and recording", metronome: "Metronome", bpm: "BPM",
-      record: "Record", stopRecord: "Stop recording", play: "Playback", stop: "Stop",
+      record: "Record", stopRecord: "Stop recording", recordArmed: "Press a pad to record", play: "Playback", stop: "Stop",
       clear: "Clear", neon: "Neon light",
       padSize: "Pad size",
       padSizeNote: "Scale the whole keypad; it stays centered and clear of the top tools and bottom-right controls.",
@@ -2370,6 +2375,7 @@
         playFallback(midi, velocity, now, group);
         return;
       }
+
 
       const polyScale = 1 / Math.sqrt(Math.max(1, voices.length));
       const peak = (TARGET_PEAK / entry.peak) * velocity * polyScale;
@@ -3655,7 +3661,8 @@
     cycleStart: 0,
     cycle: 0,
     timer: null,
-    recordingTrack: 0
+    recordingTrack: 0,
+    armed: false
   };
 
   function totalEvents() {
@@ -3672,6 +3679,7 @@
   }
 
   function capturePad(pad) {
+    if (rec.armed) beginTake();
     if (!rec.recording) return;
     const now = performance.now();
     let t = (now - rec.recStart) / 1000;
@@ -3695,22 +3703,24 @@
     if (!transport) return;
     metroButton.setAttribute("aria-pressed", String(metroOn));
     metroButton.classList.toggle("is-on", metroOn);
-    recordButton.setAttribute("aria-pressed", String(rec.recording));
+    const recActive = rec.recording || rec.armed;
+    recordButton.setAttribute("aria-pressed", String(recActive));
     recordButton.classList.toggle("is-recording", rec.recording);
+    recordButton.classList.toggle("is-armed", rec.armed);
     playButton.setAttribute("aria-pressed", String(rec.playing));
     playButton.classList.toggle("is-playing", rec.playing);
-    clearButton.disabled = !totalEvents() && !rec.recording;
+    clearButton.disabled = !totalEvents() && !rec.recording && !rec.armed;
     const total = totalEvents();
     const currentHas = tracks[activeTrack].events.length > 0;
     clearButton.title = t(currentHas || rec.recording || total === 0 ? "clearTrack" : "clearAll");
     clearButton.setAttribute("aria-label", clearButton.title);
-    recordButton.setAttribute("aria-label", t(rec.recording ? "stopRecord" : "record"));
-    recordButton.title = t(rec.recording ? "stopRecord" : "record");
+    recordButton.setAttribute("aria-label", t(rec.recording ? "stopRecord" : (rec.armed ? "recordArmed" : "record")));
+    recordButton.title = t(rec.recording ? "stopRecord" : (rec.armed ? "recordArmed" : "record"));
     playButton.setAttribute("aria-label", t(rec.playing ? "stop" : "play"));
     playButton.title = t(rec.playing ? "stop" : "play");
     trackValue.textContent = String(activeTrack + 1);
     trackButton.classList.toggle("has-loop", currentHas);
-    trackButton.disabled = rec.recording;
+    trackButton.disabled = rec.recording || rec.armed;
     trackButton.setAttribute("aria-label", t("track", { n: activeTrack + 1 }));
     trackButton.title = t("track", { n: activeTrack + 1 });
     bpmInput.value = String(bpm);
@@ -3782,6 +3792,7 @@
     rec.timer = null;
     rec.playing = false;
     if (rec.recording) rec.recording = false;
+    rec.armed = false;
     updateTransportUI();
   }
 
@@ -3807,7 +3818,14 @@
   }
 
   function startRecording() {
-    if (rec.recording) return;
+    if (rec.recording || rec.armed) return;
+    rec.armed = true;
+    rec.recordingTrack = activeTrack;
+    updateTransportUI();
+  }
+
+  function beginTake() {
+    if (!rec.armed || rec.recording) return;
     const now = performance.now();
     if (!rec.loopLength) {
       rec.recStart = now;
@@ -3816,8 +3834,14 @@
       const phase = rec.playing ? ((now - rec.playStart) / 1000) % rec.loopLength : 0;
       rec.recStart = now - phase * 1000;
     }
+    rec.armed = false;
     rec.recording = true;
-    rec.recordingTrack = activeTrack;
+    updateTransportUI();
+  }
+
+  function cancelArmed() {
+    if (!rec.armed) return;
+    rec.armed = false;
     updateTransportUI();
   }
 
@@ -3844,17 +3868,20 @@
 
   function toggleRecord() {
     if (rec.recording) stopRecording();
+    else if (rec.armed) cancelArmed();
     else startRecording();
   }
 
   function togglePlayback() {
     if (rec.recording) { stopRecording(); return; }
+    if (rec.armed) { cancelArmed(); return; }
     if (rec.playing) stopPlayback();
     else startPlayback();
   }
 
   function clearRecording() {
     if (rec.recording) stopRecording();
+    if (rec.armed) cancelArmed();
     const current = tracks[activeTrack];
     if (current.events.length || !totalEvents()) {
       current.events = [];
